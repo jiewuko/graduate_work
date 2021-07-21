@@ -1,0 +1,5 @@
+@startuml
+Client -> Websocket: Send message
+Websocket <-> Redis
+Client <-> Websocket
+@enduml

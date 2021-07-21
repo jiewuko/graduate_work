@@ -1,0 +1,8 @@
+@startuml
+Client -> Api: /api/v1/room/<room_uuid>/change_type/<user_uuid>/ PATCH Auth JWT Bearer
+Api <-> Api: Validate token
+Api -> Postgres: Check owner user permissions
+Api -> Postgres: Change user_room user status
+Api -> Redis : Send SERVICE_TYPE message
+Api -> Client: Response StatusMessage
+@enduml

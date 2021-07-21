@@ -1,0 +1,7 @@
+@startuml
+Client -> Api: /api/v1/room/ POST Auth JWT Bearer
+Api <-> Api: Validate token
+Api <-> Postgres: Check existing user_room
+Api -> Postgres: Create user_room if room not exist
+Api -> Client: Response StatusMessage
+@enduml

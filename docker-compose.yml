@@ -1,0 +1,47 @@
+version: '3.7'
+
+services:
+
+  redis:
+    image: redis:latest
+    hostname: redis
+    restart: "always"
+    networks:
+      - cinema_together
+    ports:
+      - ${REDIS_LISTEN_PORT}:${REDIS_LISTEN_PORT}
+    volumes:
+      - redis:${REDIS_DATA}
+
+  postgres:
+    image: postgres:latest
+    hostname: postgres
+    restart: "always"
+    networks:
+      - cinema_together
+    volumes:
+      - postgres:${POSTGRES_DATA}
+    ports:
+      - ${POSTGRES_LISTEN_PORT}:${POSTGRES_LISTEN_PORT}
+    env_file: docker-compose-env/postgres.env
+
+  app:
+    build:
+      context: .
+    networks:
+      - cinema_together
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    depends_on:
+      - postgres
+      - redis
+    env_file: docker-compose-env/app.env
+
+
+networks:
+  cinema_together:
+    driver: bridge
+
+volumes:
+  postgres:
+  redis:

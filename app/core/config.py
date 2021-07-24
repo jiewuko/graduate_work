@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Cinema together API"
     PROJECT_HOST: str = "0.0.0.0"
     PROJECT_PORT: int = 8001
+    WS_PORT: int = 8002
 
     DB_HOST: str = 'localhost'
     DB_PORT: int = 5432
@@ -14,7 +15,7 @@ class Settings(BaseSettings):
     DB_PASSWORD: str = 'test'
     DB_NAME: str = 'test'
 
-    REDIS_DSN: str = 'redis://127.0.0.1:6380/0'
+    REDIS_DSN: str = 'redis://localhost:6379/0'
 
     JWT_SECRET_KEY: str = 'secret'
     JWT_ALG: str = "HS256"

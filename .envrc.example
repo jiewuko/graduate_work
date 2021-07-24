@@ -9,4 +9,4 @@ DB_USERNAME=test
 DB_PASSWORD=test
 DB_NAME=test
 
-REDIS_DSN=redis://127.0.0.1:6380/0
+REDIS_DSN=redis://localhost:6379/0

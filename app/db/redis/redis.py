@@ -2,7 +2,6 @@ from typing import Optional
 
 from aioredis import Redis
 
-
 redis_client: Optional[Redis] = None
 
 

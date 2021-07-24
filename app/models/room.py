@@ -6,6 +6,11 @@ from pydantic.validators import UUID, datetime
 from app.models.base import BaseModel
 
 
+class RoomUserMessageTypeEnum(str, Enum):
+    service = 'service'
+    user = 'user'
+
+
 class RoomUserTypeEnum(str, Enum):
     pending = 'pending'
     member = 'member'
@@ -33,3 +38,14 @@ class RoomUserModel(BaseModel):
 
 class RoomUserTypeModel(BaseModel):
     user_type: RoomUserTypeEnum
+
+
+class RoomUserMessage(BaseModel):
+    text: str
+    msg_type: RoomUserMessageTypeEnum
+    user_id: Optional[UUID] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+    class Config:
+        use_enum_values = True

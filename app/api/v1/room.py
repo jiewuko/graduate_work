@@ -19,7 +19,7 @@ async def get_owner_room(
         request: Request,
         service: RoomService = Depends(get_room_service),
 ) -> Optional[RoomModel]:
-    room = await service.get_owner_room(user_id=str(request.user.pk))
+    room = await service.get_owner_room(user=request.user)
     if not room:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=f"User room not found!")
     return room
@@ -65,3 +65,29 @@ async def update_room_user_permission(
     if error:
         return ResponseModel(success=False, errors=[error])
     return ResponseModel(success=True)
+
+
+@room_router.post("/{room_id}/join", response_model=ResponseModel)
+@login_required()
+async def join(
+        room_id: UUID,
+        request: Request,
+        service: RoomService = Depends(get_room_service),
+) -> ResponseModel:
+    error = await service.join(user=request.user, room_id=str(room_id))
+    if error:
+        return ResponseModel(success=False, errors=[error])
+    return ResponseModel(success=True)
+
+
+@room_router.get("/{room_id}", response_model=RoomModel)
+@login_required()
+async def get_room(
+        room_id: UUID,
+        request: Request,
+        service: RoomService = Depends(get_room_service),
+) -> RoomModel:
+    room = await service.get_room(user=request.user, room_id=room_id)
+    if not room:
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail=f"Permission denied!")
+    return room

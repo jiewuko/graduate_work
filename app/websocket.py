@@ -1,99 +1,76 @@
+import asyncio
 import logging
+from functools import lru_cache
 
 import uvicorn
-from fastapi import status, FastAPI, WebSocket, WebSocketDisconnect, Depends
-from fastapi.responses import HTMLResponse
+import uvloop
+from aioredis import Redis
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+from sqlalchemy.ext.asyncio import AsyncEngine
 from starlette.middleware.authentication import AuthenticationMiddleware
 
 from app.core.config import settings
+from app.core.fastapi.auth.decorators import ws_room_permission
 from app.core.fastapi.auth.middleware import CustomAuthBackend
-from app.core.fastapi.auth.models import CustomUser
 from app.core.logger import LOGGING
+from app.db.postgres.postgres import get_pg_engine
+from app.db.redis.redis import get_redis_client
 from app.events import on_startup, on_shutdown
-from app.services.base import WebsocketService
+from app.services.ws import WebsocketService
 
 logger = logging.getLogger(__name__)
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
 app = FastAPI(
     on_startup=on_startup,
     on_shutdown=on_shutdown,
 )
-ws_service = WebsocketService()
 
 # Activate auth middleware
 app.add_middleware(AuthenticationMiddleware, backend=CustomAuthBackend())
 
-html = """
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Chat</title>
-    </head>
-    <body>
-        <h1>WebSocket Chat</h1>
-        <h2>Your ID: <span id="ws-id"></span></h2>
-        <form action="" onsubmit="sendMessage(event)">
-            <input type="text" id="messageText" autocomplete="off"/>
-            <button>Send</button>
-        </form>
-        <ul id='messages'>
-        </ul>
-        <script>
-            var client_id = Date.now()
-            document.querySelector("#ws-id").textContent = client_id;
-            var ws = new WebSocket(`ws://localhost:8001/ws/${client_id}`);
-            ws.onmessage = function(event) {
-                var messages = document.getElementById('messages')
-                var message = document.createElement('li')
-                var content = document.createTextNode(event.data)
-                message.appendChild(content)
-                messages.appendChild(message)
-            };
-            function sendMessage(event) {
-                var input = document.getElementById("messageText")
-                ws.send(input.value)
-                input.value = ''
-                event.preventDefault()
-            }
-        </script>
-    </body>
-</html>
-"""
+
+@lru_cache()
+def get_ws_service(
+        db_connection: AsyncEngine = Depends(get_pg_engine),
+        redis: Redis = Depends(get_redis_client),
+) -> WebsocketService:
+    return WebsocketService(db_connection, redis)
 
 
-@app.get("/")
-async def get():
-    return HTMLResponse(html)
+async def read_from_stream(room_id: str, service: WebsocketService, websocket: WebSocket):
+    while True:
+        await service.read_from_stream(room_id=room_id, websocket=websocket)
 
 
-async def get_user(
-        websocket: WebSocket,
-):
-    if not websocket.user.is_authenticated:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-    return websocket.user
+async def send_to_stream(room_id: str, websocket: WebSocket, service: WebsocketService):
+    while True:
+        message: str = await websocket.receive_text()
+        await service.stream_message(room_id=room_id, message=message, websocket=websocket)
 
 
 @app.websocket("/ws/{room_id}")
+@ws_room_permission()
 async def websocket_endpoint(
         websocket: WebSocket,
-        client_id: int,
-        user: CustomUser = Depends(get_user),
+        room_id: str,
+        service: WebsocketService = Depends(get_ws_service),
 ):
-    await ws_service.connect(websocket)
+    await service.connect(websocket)
+    read = asyncio.create_task(read_from_stream(service=service, websocket=websocket, room_id=room_id))
+    write = asyncio.create_task(send_to_stream(service=service, websocket=websocket, room_id=room_id))
+
     try:
-        while True:
-            data = await websocket.receive_text()
-            await ws_service.broadcast(f"{user.display_name}: {data}")
+        await asyncio.gather(read, write)
     except WebSocketDisconnect:
-        ws_service.disconnect(websocket)
-        await ws_service.broadcast(f"{user.display_name} left the chat")
+        await service.disconnect(room_id=room_id, websocket=websocket)
 
 
 if __name__ == "__main__":
     uvicorn.run(
         "app.websocket:app",
         host=settings.PROJECT_HOST,
-        port=settings.PROJECT_PORT,
+        port=settings.WS_PORT,
         log_config=LOGGING,
         log_level=logging.DEBUG,
         reload=True,

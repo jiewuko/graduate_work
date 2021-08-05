@@ -9,8 +9,8 @@ from app.services.room import RoomService
 
 class WebsocketService(RoomService):
     def __init__(self, *args, **kwargs):
-        super(WebsocketService, self).__init__(*args, **kwargs)
         self.active_connections: List[WebSocket] = []
+        super().__init__(*args, **kwargs)
 
     async def connect(self, websocket: WebSocket) -> None:
         await websocket.accept()

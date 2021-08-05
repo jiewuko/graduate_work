@@ -24,6 +24,8 @@ diagrams = ">=0.20.0"
 pytest = "*"
 pytest-cov = "*"
 pytest-asyncio = "*"
+wemake-python-styleguide = ">=0.15.2"
+mypy = "*"
 
 [requires]
 python_version = "3.8"

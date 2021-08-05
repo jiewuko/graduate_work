@@ -1,7 +1,7 @@
 import logging
 from logging import config as logging_config
 
-import uvicorn as uvicorn
+import uvicorn
 from fastapi import FastAPI, Security
 from fastapi.responses import ORJSONResponse
 from fastapi.security import APIKeyHeader

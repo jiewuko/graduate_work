@@ -102,19 +102,21 @@ class RoomService(BaseService):
     ) -> Optional[str]:
         async with self.db_connection.begin() as conn:
             if user_id == owner_id:
-                return f'Cannot change the owner of the room!'
+                return "Cannot change the owner of the room!"
 
             room_owner = await conn.execute(
                 select(exists(Room).where(and_(Room.id == room_id, Room.owner_uuid == owner_id))))
             is_owner = room_owner.scalars().first()
 
             if not is_owner:
-                return f'Permission denied!'
+                return "Permission denied!"
 
             await conn.execute(
                 update(RoomUser).where(
-                    and_(RoomUser.room_uuid == room_id,
-                         RoomUser.user_uuid == user_id)
+                    and_(
+                        RoomUser.room_uuid == room_id,
+                        RoomUser.user_uuid == user_id
+                    )
                 ).values(user_type=user_type))
 
     async def get_room_users(self, room_id: str) -> List[RoomUserModel]:

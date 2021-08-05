@@ -21,7 +21,7 @@ async def get_owner_room(
 ) -> Optional[RoomModel]:
     room = await service.get_owner_room(user=request.user)
     if not room:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail=f"User room not found!")
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="User room not found!")
     return room
 
 
@@ -89,5 +89,5 @@ async def get_room(
 ) -> RoomModel:
     room = await service.get_room(user=request.user, room_id=room_id)
     if not room:
-        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail=f"Permission denied!")
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Permission denied!")
     return room

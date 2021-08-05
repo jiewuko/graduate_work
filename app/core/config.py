@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     @property
     def pg_dsn(self):
         return f'postgresql+asyncpg://' \
-               f'{self.DB_USERNAME}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}'
+               f'{self.DB_USERNAME}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}'  # noqa
 
     class Config:
         env_file = ".envrc"

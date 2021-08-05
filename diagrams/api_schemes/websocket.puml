@@ -2,4 +2,5 @@
 Client -> Websocket: Send message
 Websocket <-> Redis
 Client <-> Websocket
+API -> Websocket
 @enduml

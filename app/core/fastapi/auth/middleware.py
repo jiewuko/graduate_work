@@ -3,7 +3,6 @@ import logging
 import jwt
 from fastapi.security import HTTPBearer
 from fastapi.security.utils import get_authorization_scheme_param
-from jwt import DecodeError
 from starlette.authentication import (
     AuthCredentials,
     AuthenticationBackend,
@@ -31,7 +30,7 @@ class CustomAuthBackend(AuthenticationBackend):
         # Checks the validity of the JWT token, if token is invalid returns UnauthenticatedUser object
         try:
             jwt_decoded = jwt.decode(credentials, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALG])
-        except DecodeError:
+        except jwt.DecodeError:
             return AuthCredentials(), UnauthenticatedUser()
 
         # In case if token is valid returns an object of the authorized user

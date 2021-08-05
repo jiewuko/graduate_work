@@ -27,5 +27,3 @@ RUN apt purge -y ${BUILD_PACKAGES} && \
 
 ADD . /var/app
 ENV PYTHONPATH "${PYTHONPATH}:/var/app/app"
-
-ENTRYPOINT ["gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "-b", ":8080" ]

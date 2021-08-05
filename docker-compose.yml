@@ -28,6 +28,7 @@ services:
   app:
     build:
       context: .
+    command: gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b :8080
     networks:
       - cinema_together
     ports:
@@ -37,6 +38,18 @@ services:
       - redis
     env_file: docker-compose-env/app.env
 
+    websocket:
+      build:
+        context: .
+      command: gunicorn app.websocket:app -w 4 -k uvicorn.workers.UvicornWorker -b :8081
+      networks:
+        - cinema_together
+      ports:
+        - ${APP_PORT}:${APP_PORT}
+      depends_on:
+        - postgres
+        - redis
+      env_file: docker-compose-env/app.env
 
 networks:
   cinema_together:
